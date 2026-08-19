@@ -8,6 +8,12 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "routes": [
+    {
+      "pattern": "finance.app-planner.com",
+      "custom_domain": true
+    }
+  ],
   "observability": {
     "enabled": true
   }
