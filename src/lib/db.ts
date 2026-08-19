@@ -1,33 +1,41 @@
-import { Pool, type PoolClient } from "pg";
+import postgres, { type Sql } from "postgres";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getEnv } from "@/lib/config";
 
-let poolPromise: Promise<Pool> | undefined;
+type QueryExecutor = Pick<Sql, "unsafe">;
+type DatabaseConnection = {
+  connectionString: string;
+  ssl: false | "require";
+};
 
-function getPool(): Promise<Pool> {
-  if (!poolPromise) {
-    const pool = new Pool({
-      connectionString: getEnv().DATABASE_URL,
-      ssl:
-        process.env.NODE_ENV === "production"
-          ? { rejectUnauthorized: false }
-          : false,
-      max: 10,
-    });
+function shouldUseSsl(connectionString: string) {
+  const host = new URL(connectionString).hostname;
+  return !["localhost", "127.0.0.1", "::1"].includes(host);
+}
 
-    poolPromise = pool
-      .connect()
-      .then((client) => {
-        client.release();
-        return pool;
-      })
-      .catch((error: unknown) => {
-        poolPromise = undefined;
-        void pool.end();
-        throw error;
-      });
+function getDatabaseConnection(): DatabaseConnection {
+  try {
+    const { env } = getCloudflareContext();
+    const hyperdrive = (env as { HYPERDRIVE?: { connectionString: string } }).HYPERDRIVE;
+    if (hyperdrive?.connectionString) {
+      return { connectionString: hyperdrive.connectionString, ssl: false };
+    }
+  } catch {
+    // Cloudflare bindings are only available in the Worker runtime.
   }
 
-  return poolPromise;
+  const connectionString = getEnv().DATABASE_URL;
+  return { connectionString, ssl: shouldUseSsl(connectionString) ? "require" : false };
+}
+
+function createSql() {
+  const { connectionString, ssl } = getDatabaseConnection();
+  return postgres(connectionString, {
+    ssl,
+    max: 1,
+    prepare: false,
+    connect_timeout: 10,
+  });
 }
 
 function rewriteSqlServerSyntax(query: string) {
@@ -67,37 +75,36 @@ export async function executeQuery<T extends Record<string, unknown> = Record<st
   query: string,
   bind: Record<string, unknown> = {},
 ): Promise<T[]> {
-  const pool = await getPool();
+  const sql = createSql();
   const { text, values } = toPgQuery(query, bind);
-  const result = await pool.query<T>(text, values);
-  return result.rows as T[];
+
+  try {
+    const result = await sql.unsafe<T[]>(text, values as never[]);
+    return result as T[];
+  } finally {
+    await sql.end({ timeout: 5 });
+  }
 }
 
 export async function executeInTransaction<T>(
-  callback: (transaction: PoolClient) => Promise<T>,
+  callback: (transaction: QueryExecutor) => Promise<T>,
 ): Promise<T> {
-  const pool = await getPool();
-  const client = await pool.connect();
+  const sql = createSql();
 
   try {
-    await client.query("BEGIN");
-    const result = await callback(client);
-    await client.query("COMMIT");
-    return result;
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
+    const result = await sql.begin(async (transaction) => callback(transaction));
+    return result as T;
   } finally {
-    client.release();
+    await sql.end({ timeout: 5 });
   }
 }
 
 export async function executeTransactionQuery<T extends Record<string, unknown> = Record<string, unknown>>(
-  transaction: PoolClient,
+  transaction: QueryExecutor,
   query: string,
   bind: Record<string, unknown> = {},
 ): Promise<T[]> {
   const { text, values } = toPgQuery(query, bind);
-  const result = await transaction.query<T>(text, values);
-  return result.rows as T[];
+  const result = await transaction.unsafe<T[]>(text, values as never[]);
+  return result as T[];
 }
