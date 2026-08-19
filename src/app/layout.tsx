@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
-      { url: "/icons/app-icon.svg", type: "image/svg+xml" },
+      { url: "/icons/finance-app-planner.svg", type: "image/svg+xml" },
       { url: "/icons/app-icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/app-icon-512.png", sizes: "512x512", type: "image/png" },
     ],
