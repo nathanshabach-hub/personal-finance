@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Ledger Atlas app icon">
+  <rect width="512" height="512" fill="#08224d"/>
+  <rect x="54" y="66" width="356" height="92" rx="24" fill="#55a9f7"/>
+  <rect x="108" y="94" width="286" height="350" rx="22" fill="#9fe0ff"/>
+  <rect x="108" y="94" width="286" height="350" rx="22" fill="url(#paperShade)"/>
+  <path d="M250 122v27c30 4 51 23 51 51h-37c0-13-11-23-30-23-17 0-28 8-28 19 0 13 15 18 39 25 36 11 64 24 64 61 0 31-22 53-59 59v31h-34v-31c-39-6-63-29-64-65h38c1 20 16 32 41 32 23 0 36-9 36-24 0-14-14-20-42-28-36-10-60-25-60-58 0-28 21-49 55-55v-22h30z" fill="#ffffff"/>
+  <rect x="159" y="229" width="45" height="45" rx="9" fill="#ffffff"/>
+  <rect x="237" y="241" width="93" height="10" rx="5" fill="#ffffff"/>
+  <rect x="159" y="300" width="45" height="45" rx="9" fill="#ffffff"/>
+  <rect x="237" y="312" width="112" height="10" rx="5" fill="#ffffff"/>
+  <rect x="159" y="371" width="45" height="45" rx="9" fill="#ffffff"/>
+  <rect x="237" y="383" width="83" height="10" rx="5" fill="#ffffff"/>
+  <circle cx="390" cy="212" r="64" fill="#55a9f7"/>
+  <circle cx="390" cy="212" r="46" fill="none" stroke="#ffffff" stroke-width="15" stroke-linecap="round" stroke-dasharray="205 90" transform="rotate(-36 390 212)"/>
+  <rect x="315" y="288" width="154" height="158" rx="23" fill="#3d97ee"/>
+  <rect x="337" y="315" width="110" height="35" rx="10" fill="#ffffff"/>
+  <g fill="#8fd6ff">
+    <rect x="341" y="379" width="28" height="28" rx="5"/>
+    <rect x="386" y="379" width="28" height="28" rx="5"/>
+    <rect x="431" y="379" width="28" height="28" rx="5"/>
+    <rect x="341" y="424" width="28" height="28" rx="5"/>
+    <rect x="386" y="424" width="28" height="28" rx="5"/>
+    <rect x="431" y="424" width="28" height="28" rx="5"/>
+  </g>
+  <defs>
+    <linearGradient id="paperShade" x1="108" x2="394" y1="94" y2="444" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c5efff"/>
+      <stop offset="1" stop-color="#7fc9f5"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -1,0 +1,24 @@
+{
+  "name": "Ledger Atlas",
+  "short_name": "Ledger Atlas",
+  "description": "Personal budgeting and financial management",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#08224d",
+  "theme_color": "#08224d",
+  "icons": [
+    {
+      "src": "/icons/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
