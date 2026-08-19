@@ -40,7 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-10 border-b border-slate-200/80 bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-cyan-700">Ledger Atlas</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-cyan-700">Personal Budgeting</p>
             <h1 className="text-lg font-semibold text-slate-900">Personal Budgeting</h1>
           </div>
           <LogoutButton />
