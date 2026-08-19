@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Name>BudgetingDatabase</Name>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
+    <ModelCollation>1033, CI</ModelCollation>
+  </PropertyGroup>
+  <ItemGroup>
+    <Build Include="Tables\Users.sql" />
+    <Build Include="Tables\FinancialAccounts.sql" />
+    <Build Include="Tables\Categories.sql" />
+    <Build Include="Tables\Transfers.sql" />
+    <Build Include="Tables\Transactions.sql" />
+    <Build Include="Tables\Budgets.sql" />
+    <Build Include="Tables\BudgetCategories.sql" />
+    <Build Include="Tables\SavingsGoals.sql" />
+    <Build Include="Tables\RecurringTransactions.sql" />
+    <Build Include="Tables\Notifications.sql" />
+    <Build Include="Tables\AuditLogs.sql" />
+    <Build Include="Views\vw_AccountBalances.sql" />
+    <Build Include="Views\vw_BudgetPerformance.sql" />
+    <Build Include="Stored Procedures\SeedDefaultCategories.sql" />
+    <None Include="Scripts\SeedDevelopmentData.sql" />
+  </ItemGroup>
+</Project>
