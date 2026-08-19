@@ -2,19 +2,19 @@ import { executeQuery } from "@/lib/db";
 
 export async function listBudgets(userId: string) {
   return executeQuery(
-    `SELECT BudgetId, UserId, BudgetMonth, Name, CreatedAt, UpdatedAt
-     FROM dbo.Budgets
-     WHERE UserId = @userId
-     ORDER BY BudgetMonth DESC`,
+    `SELECT id, user_id, budget_month, name, created_at, updated_at
+     FROM budgets
+     WHERE user_id = @userId
+     ORDER BY budget_month DESC`,
     { userId },
   );
 }
 
 export async function createBudget(userId: string, budgetMonth: string, name: string) {
-  const rows = await executeQuery<{ BudgetId: string }>(
-    `INSERT INTO dbo.Budgets (BudgetId, UserId, BudgetMonth, Name, CreatedAt, UpdatedAt)
-     OUTPUT inserted.BudgetId
-     VALUES (NEWID(), @userId, @budgetMonth, @name, SYSUTCDATETIME(), SYSUTCDATETIME())`,
+  const rows = await executeQuery<{ id: string }>(
+    `INSERT INTO budgets (user_id, budget_month, name)
+     VALUES (@userId, @budgetMonth::DATE, @name)
+     RETURNING id`,
     { userId, budgetMonth, name },
   );
 
@@ -29,19 +29,15 @@ export async function upsertBudgetCategory(
   rolloverEnabled: boolean,
 ) {
   await executeQuery(
-    `MERGE dbo.BudgetCategories AS target
-     USING (SELECT @budgetId AS BudgetId, @categoryId AS CategoryId) AS source
-     ON target.BudgetId = source.BudgetId AND target.CategoryId = source.CategoryId
-     WHEN MATCHED THEN
-       UPDATE SET PlannedAmount = @plannedAmount, RolloverEnabled = @rolloverEnabled
-     WHEN NOT MATCHED THEN
-       INSERT (BudgetCategoryId, BudgetId, CategoryId, PlannedAmount, RolloverEnabled)
-       VALUES (NEWID(), @budgetId, @categoryId, @plannedAmount, @rolloverEnabled);`,
-    { userId, budgetId, categoryId, plannedAmount, rolloverEnabled },
+    `INSERT INTO budget_categories (budget_id, category_id, planned_amount, rollover_enabled)
+     VALUES (@budgetId, @categoryId, @plannedAmount::NUMERIC, @rolloverEnabled)
+     ON CONFLICT (budget_id, category_id) DO UPDATE
+     SET planned_amount = @plannedAmount::NUMERIC, rollover_enabled = @rolloverEnabled`,
+    { budgetId, categoryId, plannedAmount, rolloverEnabled },
   );
 
   await executeQuery(
-    `UPDATE dbo.Budgets SET UpdatedAt = SYSUTCDATETIME() WHERE BudgetId = @budgetId AND UserId = @userId`,
+    `UPDATE budgets SET updated_at = CURRENT_TIMESTAMP WHERE id = @budgetId AND user_id = @userId`,
     { budgetId, userId },
   );
 }
@@ -49,9 +45,9 @@ export async function upsertBudgetCategory(
 export async function getBudgetPerformance(userId: string, budgetMonth: string) {
   return executeQuery(
     `SELECT *
-     FROM dbo.vw_BudgetPerformance
-     WHERE UserId = @userId AND BudgetMonth = @budgetMonth
-     ORDER BY CategoryName`,
+     FROM budget_performance
+     WHERE user_id = @userId AND budget_month = @budgetMonth::DATE
+     ORDER BY category_name`,
     { userId, budgetMonth },
   );
 }

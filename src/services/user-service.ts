@@ -1,32 +1,34 @@
 import { executeQuery } from "@/lib/db";
 
 interface UserRow {
-  UserId: string;
-  Email: string;
-  PasswordHash: string;
-  FirstName: string;
-  LastName: string;
-  DefaultCurrency: string;
-  TimeZone: string;
-  IsActive: boolean;
+  id: string;
+  email: string;
+  password_hash: string;
+  first_name: string;
+  last_name: string;
+  default_currency: string;
+  time_zone: string;
+  is_active: boolean;
 }
 
 export async function findUserByEmail(email: string) {
   const rows = await executeQuery<UserRow & Record<string, unknown>>(
-    `SELECT TOP 1 UserId, Email, PasswordHash, FirstName, LastName, DefaultCurrency, TimeZone, IsActive
-     FROM dbo.Users
-     WHERE Email = @email`,
-    { email: email.toLowerCase() },
+    `SELECT id, email, password_hash, first_name, last_name, default_currency, time_zone, is_active
+     FROM users
+     WHERE LOWER(email) = LOWER(@email)
+     LIMIT 1`,
+    { email },
   );
 
   return rows[0] ?? null;
 }
 
 export async function findUserById(userId: string) {
-  const rows = await executeQuery<(Omit<UserRow, "PasswordHash"> & Record<string, unknown>)>(
-    `SELECT TOP 1 UserId, Email, FirstName, LastName, DefaultCurrency, TimeZone, IsActive
-     FROM dbo.Users
-     WHERE UserId = @userId`,
+  const rows = await executeQuery<(Omit<UserRow, "password_hash"> & Record<string, unknown>)>(
+    `SELECT id, email, first_name, last_name, default_currency, time_zone, is_active
+     FROM users
+     WHERE id = @userId
+     LIMIT 1`,
     { userId },
   );
 
@@ -41,12 +43,12 @@ export async function createUser(input: {
   defaultCurrency: string;
   timeZone: string;
 }) {
-  const rows = await executeQuery<{ UserId: string; Email: string }>(
-    `INSERT INTO dbo.Users
-      (UserId, Email, PasswordHash, FirstName, LastName, DefaultCurrency, TimeZone, CreatedAt, UpdatedAt, IsActive)
-     OUTPUT inserted.UserId, inserted.Email
+  const rows = await executeQuery<{ id: string; email: string }>(
+    `INSERT INTO users
+      (email, password_hash, first_name, last_name, default_currency, time_zone, is_active)
      VALUES
-      (NEWID(), @email, @passwordHash, @firstName, @lastName, @defaultCurrency, @timeZone, SYSUTCDATETIME(), SYSUTCDATETIME(), 1)`,
+      (@email, @passwordHash, @firstName, @lastName, @defaultCurrency, @timeZone, true)
+     RETURNING id, email`,
     {
       email: input.email.toLowerCase(),
       passwordHash: input.passwordHash,

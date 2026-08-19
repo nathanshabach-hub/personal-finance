@@ -2,10 +2,10 @@ import { executeQuery } from "@/lib/db";
 
 export async function listSavingsGoals(userId: string) {
   return executeQuery(
-    `SELECT SavingsGoalId, Name, TargetAmount, CurrentAmount, TargetDate, Icon, Color, CreatedAt, UpdatedAt, IsActive
-     FROM dbo.SavingsGoals
-     WHERE UserId = @userId
-     ORDER BY CreatedAt DESC`,
+    `SELECT id, name, target_amount, current_amount, target_date, icon, color, created_at, updated_at, is_active
+     FROM savings_goals
+     WHERE user_id = @userId
+     ORDER BY created_at DESC`,
     { userId },
   );
 }
@@ -21,12 +21,12 @@ export async function createSavingsGoal(
     color?: string | null;
   },
 ) {
-  const rows = await executeQuery<{ SavingsGoalId: string }>(
-    `INSERT INTO dbo.SavingsGoals
-      (SavingsGoalId, UserId, Name, TargetAmount, CurrentAmount, TargetDate, Icon, Color, CreatedAt, UpdatedAt, IsActive)
-     OUTPUT inserted.SavingsGoalId
+  const rows = await executeQuery<{ id: string }>(
+    `INSERT INTO savings_goals
+      (user_id, name, target_amount, current_amount, target_date, icon, color, is_active)
      VALUES
-      (NEWID(), @userId, @name, @targetAmount, @currentAmount, @targetDate, @icon, @color, SYSUTCDATETIME(), SYSUTCDATETIME(), 1)`,
+      (@userId, @name, @targetAmount::NUMERIC, @currentAmount::NUMERIC, @targetDate::DATE, @icon, @color, true)
+     RETURNING id`,
     {
       userId,
       name: input.name,
@@ -43,10 +43,10 @@ export async function createSavingsGoal(
 
 export async function adjustSavingsGoal(userId: string, savingsGoalId: string, amount: string) {
   await executeQuery(
-    `UPDATE dbo.SavingsGoals
-      SET CurrentAmount = CurrentAmount + @amount,
-          UpdatedAt = SYSUTCDATETIME()
-     WHERE SavingsGoalId = @savingsGoalId AND UserId = @userId`,
+    `UPDATE savings_goals
+      SET current_amount = current_amount + @amount::NUMERIC,
+          updated_at = CURRENT_TIMESTAMP
+     WHERE id = @savingsGoalId AND user_id = @userId`,
     { userId, savingsGoalId, amount },
   );
 }

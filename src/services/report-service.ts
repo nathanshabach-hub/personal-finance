@@ -3,23 +3,23 @@ import { executeQuery } from "@/lib/db";
 export async function dashboardSummary(userId: string, monthStart: string, monthEnd: string) {
   const [summary] = await executeQuery(
     `SELECT
-       COALESCE(SUM(CASE WHEN AccountType IN ('Loan','CreditCard') THEN 0 ELSE CurrentBalance END), 0) AS TotalAssets,
-       COALESCE(SUM(CASE WHEN AccountType IN ('Loan','CreditCard') THEN CurrentBalance ELSE 0 END), 0) AS TotalLiabilities,
-       COALESCE(SUM(CurrentBalance), 0) AS NetWorth
-     FROM dbo.vw_AccountBalances
-     WHERE UserId = @userId`,
+       COALESCE(SUM(CASE WHEN account_type NOT IN ('Loan','CreditCard') THEN current_balance ELSE 0 END), 0) AS "totalAssets",
+       COALESCE(SUM(CASE WHEN account_type IN ('Loan','CreditCard') THEN current_balance ELSE 0 END), 0) AS "totalLiabilities",
+       COALESCE(SUM(current_balance), 0) AS "netWorth"
+     FROM account_balances
+     WHERE user_id = @userId`,
     { userId },
   );
 
   const [monthly] = await executeQuery(
     `SELECT
-       COALESCE(SUM(CASE WHEN TransactionType = 'Income' THEN Amount ELSE 0 END), 0) AS MonthlyIncome,
-       COALESCE(SUM(CASE WHEN TransactionType = 'Expense' THEN Amount ELSE 0 END), 0) AS MonthlyExpenses
-     FROM dbo.Transactions
-     WHERE UserId = @userId
-       AND TransactionDate >= @monthStart
-       AND TransactionDate <= @monthEnd
-       AND TransactionType <> 'Transfer'`,
+       COALESCE(SUM(CASE WHEN transaction_type = 'Income' THEN amount ELSE 0 END), 0) AS "monthlyIncome",
+       COALESCE(SUM(CASE WHEN transaction_type = 'Expense' THEN amount ELSE 0 END), 0) AS "monthlyExpenses"
+     FROM transactions
+     WHERE user_id = @userId
+       AND transaction_date >= @monthStart::DATE
+       AND transaction_date <= @monthEnd::DATE
+       AND transaction_type <> 'Transfer'`,
     { userId, monthStart, monthEnd },
   );
 
@@ -28,15 +28,15 @@ export async function dashboardSummary(userId: string, monthStart: string, month
 
 export async function spendingByCategory(userId: string, fromDate: string, toDate: string) {
   return executeQuery(
-    `SELECT c.Name AS CategoryName, SUM(ABS(t.Amount)) AS Amount
-     FROM dbo.Transactions t
-     INNER JOIN dbo.Categories c ON c.CategoryId = t.CategoryId
-     WHERE t.UserId = @userId
-       AND t.TransactionType = 'Expense'
-       AND t.TransactionDate >= @fromDate
-       AND t.TransactionDate <= @toDate
-     GROUP BY c.Name
-     ORDER BY Amount DESC`,
+    `SELECT c.name AS "categoryName", SUM(ABS(t.amount)) AS "amount"
+     FROM transactions t
+     INNER JOIN categories c ON c.id = t.category_id
+     WHERE t.user_id = @userId
+       AND t.transaction_type = 'Expense'
+       AND t.transaction_date >= @fromDate::DATE
+       AND t.transaction_date <= @toDate::DATE
+     GROUP BY c.name
+     ORDER BY "amount" DESC`,
     { userId, fromDate, toDate },
   );
 }

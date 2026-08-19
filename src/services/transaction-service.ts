@@ -22,23 +22,23 @@ export async function listTransactions(userId: string, filters: TransactionListF
   const offset = (filters.page - 1) * filters.pageSize;
 
   return executeQuery(
-    `SELECT t.TransactionId, t.UserId, t.AccountId, a.Name AS AccountName, t.CategoryId, c.Name AS CategoryName,
-            t.TransactionType, t.Amount, t.CurrencyCode, t.TransactionDate, t.Description, t.Merchant,
-            t.Notes, t.Status, t.CreatedAt, t.UpdatedAt
-     FROM dbo.Transactions t
-     INNER JOIN dbo.FinancialAccounts a ON a.AccountId = t.AccountId
-     LEFT JOIN dbo.Categories c ON c.CategoryId = t.CategoryId
-     WHERE t.UserId = @userId
-       AND (@accountId IS NULL OR t.AccountId = @accountId)
-       AND (@categoryId IS NULL OR t.CategoryId = @categoryId)
-       AND (@transactionType IS NULL OR t.TransactionType = @transactionType)
-       AND (@fromDate IS NULL OR t.TransactionDate >= @fromDate)
-       AND (@toDate IS NULL OR t.TransactionDate <= @toDate)
-       AND (@merchant IS NULL OR t.Merchant LIKE @merchantLike)
-       AND (@minAmount IS NULL OR t.Amount >= @minAmount)
-       AND (@maxAmount IS NULL OR t.Amount <= @maxAmount)
-     ORDER BY t.TransactionDate DESC, t.CreatedAt DESC
-     OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY`,
+    `SELECT t.id, t.user_id, t.account_id, a.name AS account_name, t.category_id, c.name AS category_name,
+            t.transaction_type, t.amount, t.currency_code, t.transaction_date, t.description, t.merchant,
+            t.notes, t.status, t.created_at, t.updated_at
+     FROM transactions t
+     INNER JOIN financial_accounts a ON a.id = t.account_id
+     LEFT JOIN categories c ON c.id = t.category_id
+     WHERE t.user_id = @userId
+       AND (@accountId IS NULL OR t.account_id = @accountId)
+       AND (@categoryId IS NULL OR t.category_id = @categoryId)
+       AND (@transactionType IS NULL OR t.transaction_type = @transactionType)
+       AND (@fromDate IS NULL OR t.transaction_date >= @fromDate::DATE)
+       AND (@toDate IS NULL OR t.transaction_date <= @toDate::DATE)
+       AND (@merchant IS NULL OR t.merchant ILIKE @merchantLike)
+       AND (@minAmount IS NULL OR t.amount >= @minAmount::NUMERIC)
+       AND (@maxAmount IS NULL OR t.amount <= @maxAmount::NUMERIC)
+     ORDER BY t.transaction_date DESC, t.created_at DESC
+     LIMIT @pageSize OFFSET @offset`,
     {
       userId,
       accountId: filters.accountId ?? null,
@@ -72,11 +72,11 @@ export async function createTransaction(
   },
 ) {
   const rows = await executeQuery(
-    `INSERT INTO dbo.Transactions
-      (TransactionId, UserId, AccountId, CategoryId, TransactionType, Amount, CurrencyCode, TransactionDate, Description, Merchant, Notes, Status, CreatedAt, UpdatedAt)
-     OUTPUT inserted.TransactionId
+    `INSERT INTO transactions
+      (user_id, account_id, category_id, transaction_type, amount, currency_code, transaction_date, description, merchant, notes, status)
      VALUES
-      (NEWID(), @userId, @accountId, @categoryId, @transactionType, @amount, @currencyCode, @transactionDate, @description, @merchant, @notes, @status, SYSUTCDATETIME(), SYSUTCDATETIME())`,
+      (@userId, @accountId, @categoryId, @transactionType, @amount::NUMERIC, @currencyCode, @transactionDate::DATE, @description, @merchant, @notes, @status)
+     RETURNING id`,
     {
       userId,
       accountId: input.accountId,
@@ -101,19 +101,19 @@ export async function updateTransaction(
   input: Record<string, unknown>,
 ) {
   await executeQuery(
-    `UPDATE dbo.Transactions
-      SET AccountId = COALESCE(@accountId, AccountId),
-          CategoryId = COALESCE(@categoryId, CategoryId),
-          TransactionType = COALESCE(@transactionType, TransactionType),
-          Amount = COALESCE(@amount, Amount),
-          CurrencyCode = COALESCE(@currencyCode, CurrencyCode),
-          TransactionDate = COALESCE(@transactionDate, TransactionDate),
-          Description = COALESCE(@description, Description),
-          Merchant = COALESCE(@merchant, Merchant),
-          Notes = COALESCE(@notes, Notes),
-          Status = COALESCE(@status, Status),
-          UpdatedAt = SYSUTCDATETIME()
-     WHERE TransactionId = @transactionId AND UserId = @userId`,
+    `UPDATE transactions
+      SET account_id = COALESCE(@accountId, account_id),
+          category_id = COALESCE(@categoryId, category_id),
+          transaction_type = COALESCE(@transactionType, transaction_type),
+          amount = COALESCE(@amount::NUMERIC, amount),
+          currency_code = COALESCE(@currencyCode, currency_code),
+          transaction_date = COALESCE(@transactionDate::DATE, transaction_date),
+          description = COALESCE(@description, description),
+          merchant = COALESCE(@merchant, merchant),
+          notes = COALESCE(@notes, notes),
+          status = COALESCE(@status, status),
+          updated_at = CURRENT_TIMESTAMP
+     WHERE id = @transactionId AND user_id = @userId`,
     {
       transactionId,
       userId,
@@ -134,20 +134,20 @@ export async function updateTransaction(
 
 export async function deleteTransaction(userId: string, transactionId: string) {
   await executeQuery(
-    `DELETE FROM dbo.Transactions WHERE TransactionId = @transactionId AND UserId = @userId`,
+    `DELETE FROM transactions WHERE id = @transactionId AND user_id = @userId`,
     { userId, transactionId },
   );
 }
 
 export async function duplicateTransaction(userId: string, transactionId: string) {
-  const rows = await executeQuery<{ TransactionId: string }>(
-    `INSERT INTO dbo.Transactions
-      (TransactionId, UserId, AccountId, CategoryId, TransactionType, Amount, CurrencyCode, TransactionDate, Description, Merchant, Notes, Status, CreatedAt, UpdatedAt)
-     OUTPUT inserted.TransactionId
-     SELECT NEWID(), UserId, AccountId, CategoryId, TransactionType, Amount, CurrencyCode,
-            TransactionDate, Description, Merchant, Notes, Status, SYSUTCDATETIME(), SYSUTCDATETIME()
-     FROM dbo.Transactions
-     WHERE TransactionId = @transactionId AND UserId = @userId`,
+  const rows = await executeQuery<{ id: string }>(
+    `INSERT INTO transactions
+      (user_id, account_id, category_id, transaction_type, amount, currency_code, transaction_date, description, merchant, notes, status)
+     SELECT user_id, account_id, category_id, transaction_type, amount, currency_code,
+            transaction_date, description, merchant, notes, status
+     FROM transactions
+     WHERE id = @transactionId AND user_id = @userId
+     RETURNING id`,
     { transactionId, userId },
   );
 
@@ -171,15 +171,15 @@ export async function createTransfer(
   }
 
   return executeInTransaction(async (transaction) => {
-    const fromRows = await executeTransactionQuery<{ AccountId: string }>(
+    const fromRows = await executeTransactionQuery<{ id: string }>(
       transaction,
-      `SELECT AccountId FROM dbo.FinancialAccounts WHERE AccountId = @accountId AND UserId = @userId AND IsActive = 1`,
+      `SELECT id FROM financial_accounts WHERE id = @accountId AND user_id = @userId AND is_active = true`,
       { accountId: input.fromAccountId, userId },
     );
 
-    const toRows = await executeTransactionQuery<{ AccountId: string }>(
+    const toRows = await executeTransactionQuery<{ id: string }>(
       transaction,
-      `SELECT AccountId FROM dbo.FinancialAccounts WHERE AccountId = @accountId AND UserId = @userId AND IsActive = 1`,
+      `SELECT id FROM financial_accounts WHERE id = @accountId AND user_id = @userId AND is_active = true`,
       { accountId: input.toAccountId, userId },
     );
 
@@ -187,13 +187,13 @@ export async function createTransfer(
       throw new AppError("Invalid transfer accounts", 400);
     }
 
-    const transferRows = await executeTransactionQuery<{ TransferId: string }>(
+    const transferRows = await executeTransactionQuery<{ id: string }>(
       transaction,
-      `INSERT INTO dbo.Transfers
-        (TransferId, UserId, FromAccountId, ToAccountId, Amount, CurrencyCode, TransferDate, Description, Notes, CreatedAt)
-       OUTPUT inserted.TransferId
+      `INSERT INTO transfers
+        (user_id, from_account_id, to_account_id, amount, currency_code, transfer_date, description, notes)
        VALUES
-        (NEWID(), @userId, @fromAccountId, @toAccountId, @amount, @currencyCode, @transferDate, @description, @notes, SYSUTCDATETIME())`,
+        (@userId, @fromAccountId, @toAccountId, @amount::NUMERIC, @currencyCode, @transferDate::DATE, @description, @notes)
+       RETURNING id`,
       {
         userId,
         fromAccountId: input.fromAccountId,
@@ -206,15 +206,15 @@ export async function createTransfer(
       },
     );
 
-    const transferId = transferRows[0].TransferId;
+    const transferId = transferRows[0].id;
 
     await executeTransactionQuery(
       transaction,
-      `INSERT INTO dbo.Transactions
-        (TransactionId, UserId, AccountId, CategoryId, TransactionType, Amount, CurrencyCode, TransactionDate, Description, Merchant, Notes, Status, RelatedTransferId, CreatedAt, UpdatedAt)
+      `INSERT INTO transactions
+        (user_id, account_id, category_id, transaction_type, amount, currency_code, transaction_date, description, merchant, notes, status, related_transfer_id)
        VALUES
-        (NEWID(), @userId, @fromAccountId, NULL, 'Transfer', @negativeAmount, @currencyCode, @transferDate, @description, NULL, @notes, 'Cleared', @transferId, SYSUTCDATETIME(), SYSUTCDATETIME()),
-        (NEWID(), @userId, @toAccountId, NULL, 'Transfer', @positiveAmount, @currencyCode, @transferDate, @description, NULL, @notes, 'Cleared', @transferId, SYSUTCDATETIME(), SYSUTCDATETIME())`,
+        (@userId, @fromAccountId, NULL, 'Transfer', @negativeAmount::NUMERIC, @currencyCode, @transferDate::DATE, @description, NULL, @notes, 'Cleared', @transferId),
+        (@userId, @toAccountId, NULL, 'Transfer', @positiveAmount::NUMERIC, @currencyCode, @transferDate::DATE, @description, NULL, @notes, 'Cleared', @transferId)`,
       {
         userId,
         fromAccountId: input.fromAccountId,

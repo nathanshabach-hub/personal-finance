@@ -4,10 +4,13 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   APP_URL: z.string().url().default("http://localhost:3000"),
   AUTH_SECRET: z.string().min(32).default("dev-secret-change-me-32-chars-long"),
-  DATABASE_CONNECTION_STRING: z
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url().default("https://example-project.supabase.co"),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).default("anon-key-placeholder"),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).default("service-role-placeholder"),
+  DATABASE_URL: z
     .string()
     .min(1)
-    .default("Server=localhost,1433;Database=BudgetingDatabase;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Encrypt=False;"),
+    .default("postgresql://postgres:postgres@localhost:54322/postgres"),
   DEFAULT_CURRENCY: z.string().length(3).default("AUD"),
 });
 
@@ -22,7 +25,10 @@ export function getEnv() {
     NODE_ENV: process.env.NODE_ENV,
     APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     AUTH_SECRET: process.env.AUTH_SECRET,
-    DATABASE_CONNECTION_STRING: process.env.DATABASE_CONNECTION_STRING,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    DATABASE_URL: process.env.DATABASE_URL,
     DEFAULT_CURRENCY: process.env.DEFAULT_CURRENCY,
   });
 
@@ -30,9 +36,14 @@ export function getEnv() {
     NODE_ENV: process.env.NODE_ENV,
     APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
     AUTH_SECRET: process.env.AUTH_SECRET ?? "dev-secret-change-me-32-chars-long",
-    DATABASE_CONNECTION_STRING:
-      process.env.DATABASE_CONNECTION_STRING ??
-      "Server=localhost,1433;Database=BudgetingDatabase;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=true;Encrypt=False;",
+    NEXT_PUBLIC_SUPABASE_URL:
+      process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://example-project.supabase.co",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "anon-key-placeholder",
+    SUPABASE_SERVICE_ROLE_KEY:
+      process.env.SUPABASE_SERVICE_ROLE_KEY ?? "service-role-placeholder",
+    DATABASE_URL:
+      process.env.DATABASE_URL ?? "postgresql://postgres:postgres@localhost:54322/postgres",
     DEFAULT_CURRENCY: process.env.DEFAULT_CURRENCY ?? "AUD",
   });
 

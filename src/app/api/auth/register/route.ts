@@ -26,15 +26,15 @@ export async function POST(request: Request) {
       timeZone: payload.timeZone,
     });
 
-    await seedDefaultCategories(user.UserId);
+    await seedDefaultCategories(user.id as string);
     await writeAuditLog({
-      userId: user.UserId,
+      userId: user.id as string,
       action: "REGISTER",
       entityName: "Users",
-      entityId: user.UserId,
+      entityId: user.id as string,
     });
 
-    const token = await createSessionToken({ userId: user.UserId, email: user.Email });
+    const token = await createSessionToken({ userId: user.id as string, email: user.email as string });
     const cookieStore = await cookies();
     cookieStore.set(sessionCookie.name, token, {
       httpOnly: true,
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       path: "/",
     });
 
-    return ok({ userId: user.UserId, email: user.Email }, { status: 201 });
+    return ok({ userId: user.id, email: user.email }, { status: 201 });
   } catch (error) {
     return fail(error);
   }

@@ -20,7 +20,7 @@ export async function POST(
       userId: user.userId,
       action: "DUPLICATE_TRANSACTION",
       entityName: "Transactions",
-      entityId: String(created.TransactionId),
+      entityId: String(created.id),
     });
 
     return ok(created, { status: 201 });

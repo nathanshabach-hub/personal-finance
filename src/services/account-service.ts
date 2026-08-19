@@ -2,10 +2,10 @@ import { executeQuery } from "@/lib/db";
 
 export async function listAccounts(userId: string) {
   return executeQuery(
-    `SELECT AccountId, UserId, Name, AccountType, InstitutionName, CurrencyCode, OpeningBalance, IsActive, CreatedAt, UpdatedAt
-     FROM dbo.FinancialAccounts
-     WHERE UserId = @userId
-     ORDER BY CreatedAt DESC`,
+    `SELECT id, user_id, name, account_type, institution_name, currency_code, opening_balance, is_active, created_at, updated_at
+     FROM financial_accounts
+     WHERE user_id = @userId
+     ORDER BY created_at DESC`,
     { userId },
   );
 }
@@ -21,10 +21,10 @@ export async function createAccount(
   },
 ) {
   const rows = await executeQuery(
-    `INSERT INTO dbo.FinancialAccounts
-      (AccountId, UserId, Name, AccountType, InstitutionName, CurrencyCode, OpeningBalance, CreatedAt, UpdatedAt, IsActive)
-     OUTPUT inserted.AccountId
-     VALUES (NEWID(), @userId, @name, @accountType, @institutionName, @currencyCode, @openingBalance, SYSUTCDATETIME(), SYSUTCDATETIME(), 1)`,
+    `INSERT INTO financial_accounts
+      (user_id, name, account_type, institution_name, currency_code, opening_balance, is_active)
+     VALUES (@userId, @name, @accountType, @institutionName, @currencyCode, @openingBalance, true)
+     RETURNING id`,
     {
       userId,
       name: input.name,
@@ -51,15 +51,15 @@ export async function updateAccount(
   },
 ) {
   await executeQuery(
-    `UPDATE dbo.FinancialAccounts
-      SET Name = COALESCE(@name, Name),
-          AccountType = COALESCE(@accountType, AccountType),
-          InstitutionName = COALESCE(@institutionName, InstitutionName),
-          CurrencyCode = COALESCE(@currencyCode, CurrencyCode),
-          OpeningBalance = COALESCE(@openingBalance, OpeningBalance),
-          IsActive = COALESCE(@isActive, IsActive),
-          UpdatedAt = SYSUTCDATETIME()
-     WHERE AccountId = @accountId AND UserId = @userId`,
+    `UPDATE financial_accounts
+      SET name = COALESCE(@name, name),
+          account_type = COALESCE(@accountType, account_type),
+          institution_name = COALESCE(@institutionName, institution_name),
+          currency_code = COALESCE(@currencyCode, currency_code),
+          opening_balance = COALESCE(@openingBalance, opening_balance),
+          is_active = COALESCE(@isActive, is_active),
+          updated_at = CURRENT_TIMESTAMP
+     WHERE id = @accountId AND user_id = @userId`,
     {
       userId,
       accountId,
@@ -75,9 +75,9 @@ export async function updateAccount(
 
 export async function softDeleteAccount(userId: string, accountId: string) {
   await executeQuery(
-    `UPDATE dbo.FinancialAccounts
-      SET IsActive = 0, UpdatedAt = SYSUTCDATETIME()
-     WHERE AccountId = @accountId AND UserId = @userId`,
+    `UPDATE financial_accounts
+      SET is_active = false, updated_at = CURRENT_TIMESTAMP
+     WHERE id = @accountId AND user_id = @userId`,
     { accountId, userId },
   );
 }

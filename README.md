@@ -1,23 +1,49 @@
-# Ledger Atlas
+# Personal Finance Budgeting Application
 
-Ledger Atlas is a production-style personal budgeting application built with Next.js, TypeScript, and a SQL Server-backed data layer. It includes account management, transaction tracking, recurring schedules, savings goals, category budgets, CSV import/export, reporting, and secure authentication.
+A production-style personal budgeting application built with Next.js, TypeScript, and Supabase PostgreSQL. Includes account management, transaction tracking, recurring schedules, savings goals, category budgets, CSV import/export, reporting, and secure authentication.
 
-## Project status
+## Quick Start
 
-The app is implemented and verified to build successfully in the current workspace.
+### Prerequisites
+- Node.js 18+
+- A [Supabase account](https://supabase.com) (free tier available)
 
-Verified commands:
+### Setup Instructions
+
+1. **Clone the repository and install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Set up Supabase** - See [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) for detailed instructions:
+   - Create a Supabase project
+   - Run the database migration
+   - Configure environment variables in `.env.local`
+
+3. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+
+4. **Open your browser:**
+   Navigate to `http://localhost:3000` and register a new account
+
+### Verified Commands
 
 ```bash
-npm run build
-npm run lint
+npm run build      # Production build
+npm run dev        # Development server
+npm run lint       # Run ESLint
+npm run start      # Start production server
 ```
 
-The local dev server is intended to run on:
+## Architecture
 
-```text
-http://127.0.0.1:3000
-```
+- **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS
+- **Backend:** Next.js App Router (server-side)
+- **Database:** Supabase PostgreSQL
+- **Auth:** JWT session cookies with bcryptjs password hashing
+- **API:** RESTful endpoints with RLS (Row-Level Security)
 
 ## Core features
 
@@ -37,7 +63,7 @@ http://127.0.0.1:3000
 - Frontend: Next.js 16, React 19, TypeScript, Tailwind CSS
 - Backend: App Router route handlers and server-side services
 - Auth: bcryptjs + jose JWT
-- Database: SQL Server / Azure SQL via `mssql`
+- Database: Supabase Postgres via `@supabase/supabase-js`
 - Validation: Zod
 - Charts: Recharts
 - CSV: `csv-stringify` / `csv-parse`
@@ -84,7 +110,7 @@ Before running the app locally, make sure you have:
 
 - Node.js 20+
 - npm
-- Access to a SQL Server or Azure SQL instance
+- Access to a Supabase Postgres instance or local Postgres database
 - A valid `AUTH_SECRET` value
 
 ## Local environment setup
@@ -101,13 +127,16 @@ Then update the values in `.env.local`:
 NODE_ENV=development
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 AUTH_SECRET=replace-with-a-long-random-secret-at-least-32-chars
-DATABASE_CONNECTION_STRING=Server=tcp:your-sql-server.database.windows.net,1433;Initial Catalog=BudgetingDatabase;Persist Security Info=False;User ID=app_user;Password=replace-me;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
+DATABASE_URL=postgresql://postgres:your-password@db.your-project.supabase.co:5432/postgres
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 DEFAULT_CURRENCY=AUD
 ```
 
 Notes:
 
-- The app is designed around SQL Server, not SQLite/D1.
+- The app is designed around Supabase Postgres, not SQLite/D1.
 - If the database is not available, auth and data routes will fail at runtime, even though the frontend may render.
 - A valid secret is required for session token creation.
 
@@ -154,14 +183,17 @@ This project is not currently built for Cloudflare D1/SQLite without code change
 A recommended production setup is:
 
 - Cloudflare Pages for the Next.js frontend
-- Azure SQL or another SQL Server-hosted database for application data
+- Supabase Postgres or another managed Postgres instance for application data
 - Cloudflare project environment variables for runtime config
 
 Recommended environment variables to set in the Cloudflare project:
 
 ```env
 AUTH_SECRET=
-DATABASE_CONNECTION_STRING=
+DATABASE_URL=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_APP_URL=
 DEFAULT_CURRENCY=AUD
 ```
@@ -188,7 +220,7 @@ npx vitest run
 - Session tokens are signed with a secret from the environment
 - Passwords are hashed using bcryptjs
 - API handlers use server-side auth guards for protected resources
-- Database access is centralized through a single `mssql` helper layer
+- Database access is centralized through a single Postgres/Supabase helper layer
 
 ## Contributing
 

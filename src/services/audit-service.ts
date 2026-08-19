@@ -8,8 +8,8 @@ export async function writeAuditLog(params: {
   metadata?: Record<string, unknown>;
 }) {
   await executeQuery(
-    `INSERT INTO dbo.AuditLogs (AuditLogId, UserId, Action, EntityName, EntityId, Metadata, CreatedAt)
-     VALUES (NEWID(), @userId, @action, @entityName, @entityId, @metadata, SYSUTCDATETIME())`,
+    `INSERT INTO audit_logs (user_id, action, entity_name, entity_id, metadata)
+     VALUES (@userId, @action, @entityName, @entityId, @metadata::jsonb)`,
     {
       userId: params.userId,
       action: params.action,

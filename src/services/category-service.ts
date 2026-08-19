@@ -2,10 +2,10 @@ import { executeQuery } from "@/lib/db";
 
 export async function listCategories(userId: string) {
   return executeQuery(
-    `SELECT CategoryId, UserId, Name, CategoryType, ParentCategoryId, Icon, Color, IsActive, CreatedAt, UpdatedAt
-     FROM dbo.Categories
-     WHERE UserId = @userId
-     ORDER BY CategoryType, Name`,
+    `SELECT id, user_id, name, category_type, parent_category_id, icon, color, is_active, created_at, updated_at
+     FROM categories
+     WHERE user_id = @userId
+     ORDER BY category_type, name`,
     { userId },
   );
 }
@@ -21,11 +21,11 @@ export async function createCategory(
   },
 ) {
   const rows = await executeQuery(
-    `INSERT INTO dbo.Categories
-      (CategoryId, UserId, Name, CategoryType, ParentCategoryId, Icon, Color, CreatedAt, UpdatedAt, IsActive)
-     OUTPUT inserted.CategoryId
+    `INSERT INTO categories
+      (user_id, name, category_type, parent_category_id, icon, color, is_active)
      VALUES
-      (NEWID(), @userId, @name, @categoryType, @parentCategoryId, @icon, @color, SYSUTCDATETIME(), SYSUTCDATETIME(), 1)`,
+      (@userId, @name, @categoryType, @parentCategoryId, @icon, @color, true)
+     RETURNING id`,
     {
       userId,
       name: input.name,
@@ -41,7 +41,7 @@ export async function createCategory(
 
 export async function seedDefaultCategories(userId: string) {
   await executeQuery(
-    `EXEC dbo.SeedDefaultCategories @userId`,
+    `SELECT seed_default_categories_for_user(@userId)`,
     { userId },
   );
 }

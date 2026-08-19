@@ -4,11 +4,11 @@ import type { RecurrenceFrequency } from "@/types/domain";
 
 export async function listRecurringTransactions(userId: string) {
   return executeQuery(
-    `SELECT RecurringTransactionId, UserId, AccountId, CategoryId, Amount, TransactionType, Description,
-            Frequency, NextOccurrence, StartDate, EndDate, IsActive, CreatedAt, UpdatedAt
-     FROM dbo.RecurringTransactions
-     WHERE UserId = @userId
-     ORDER BY NextOccurrence ASC`,
+    `SELECT id, user_id, account_id, category_id, amount, transaction_type, description,
+            frequency, next_occurrence, start_date, end_date, is_active, created_at, updated_at
+     FROM recurring_transactions
+     WHERE user_id = @userId
+     ORDER BY next_occurrence ASC`,
     { userId },
   );
 }
@@ -28,14 +28,14 @@ export async function createRecurringTransaction(
     isActive: boolean;
   },
 ) {
-  const rows = await executeQuery<{ RecurringTransactionId: string }>(
-    `INSERT INTO dbo.RecurringTransactions
-      (RecurringTransactionId, UserId, AccountId, CategoryId, Amount, TransactionType, Description,
-       Frequency, NextOccurrence, StartDate, EndDate, IsActive, CreatedAt, UpdatedAt)
-     OUTPUT inserted.RecurringTransactionId
+  const rows = await executeQuery<{ id: string }>(
+    `INSERT INTO recurring_transactions
+      (user_id, account_id, category_id, amount, transaction_type, description,
+       frequency, next_occurrence, start_date, end_date, is_active)
      VALUES
-      (NEWID(), @userId, @accountId, @categoryId, @amount, @transactionType, @description,
-       @frequency, @nextOccurrence, @startDate, @endDate, @isActive, SYSUTCDATETIME(), SYSUTCDATETIME())`,
+      (@userId, @accountId, @categoryId, @amount::NUMERIC, @transactionType, @description,
+       @frequency, @nextOccurrence::DATE, @startDate::DATE, @endDate::DATE, @isActive)
+     RETURNING id`,
     {
       userId,
       accountId: input.accountId,

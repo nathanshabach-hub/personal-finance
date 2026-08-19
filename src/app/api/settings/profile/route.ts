@@ -6,9 +6,9 @@ export async function GET() {
   try {
     const user = await requireUser();
     const rows = await executeQuery(
-      `SELECT UserId, Email, FirstName, LastName, DefaultCurrency, TimeZone
-       FROM dbo.Users
-       WHERE UserId = @userId`,
+      `SELECT id, email, first_name, last_name, default_currency, time_zone
+       FROM users
+       WHERE id = @userId`,
       { userId: user.userId },
     );
     return ok(rows[0] ?? null);
@@ -28,13 +28,13 @@ export async function PATCH(request: Request) {
     };
 
     await executeQuery(
-      `UPDATE dbo.Users
-        SET FirstName = COALESCE(@firstName, FirstName),
-            LastName = COALESCE(@lastName, LastName),
-            DefaultCurrency = COALESCE(@defaultCurrency, DefaultCurrency),
-            TimeZone = COALESCE(@timeZone, TimeZone),
-            UpdatedAt = SYSUTCDATETIME()
-       WHERE UserId = @userId`,
+      `UPDATE users
+        SET first_name = COALESCE(@firstName, first_name),
+            last_name = COALESCE(@lastName, last_name),
+            default_currency = COALESCE(@defaultCurrency, default_currency),
+            time_zone = COALESCE(@timeZone, time_zone),
+            updated_at = CURRENT_TIMESTAMP
+       WHERE id = @userId`,
       {
         userId: user.userId,
         firstName: payload.firstName ?? null,

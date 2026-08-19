@@ -12,16 +12,16 @@ export async function POST(request: Request) {
     const payload = await parseBody(request, loginSchema);
     const user = await findUserByEmail(payload.email);
 
-    if (!user || !user.IsActive) {
+    if (!user || !user.is_active) {
       throw new AppError("Invalid email or password", 401);
     }
 
-    const validPassword = await verifyPassword(payload.password, user.PasswordHash);
+    const validPassword = await verifyPassword(payload.password, user.password_hash as string);
     if (!validPassword) {
       throw new AppError("Invalid email or password", 401);
     }
 
-    const token = await createSessionToken({ userId: user.UserId, email: user.Email });
+    const token = await createSessionToken({ userId: user.id as string, email: user.email as string });
     const cookieStore = await cookies();
     cookieStore.set(sessionCookie.name, token, {
       httpOnly: true,
@@ -32,13 +32,13 @@ export async function POST(request: Request) {
     });
 
     await writeAuditLog({
-      userId: user.UserId,
+      userId: user.id as string,
       action: "LOGIN",
       entityName: "Users",
-      entityId: user.UserId,
+      entityId: user.id as string,
     });
 
-    return ok({ userId: user.UserId, email: user.Email });
+    return ok({ userId: user.id, email: user.email });
   } catch (error) {
     return fail(error);
   }
