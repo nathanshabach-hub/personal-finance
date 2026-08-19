@@ -18,6 +18,7 @@ export function CreateAccountForm() {
     setMessage(res.ok ? "Account created" : "Failed to create account");
     if (res.ok) {
       event.currentTarget.reset();
+      window.dispatchEvent(new CustomEvent("resource:refresh", { detail: { endpoint: "/api/accounts" } }));
     }
   }
 

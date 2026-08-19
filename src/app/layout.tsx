@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  applicationName: "Ledger Atlas",
-  title: "Ledger Atlas | Personal Budgeting",
+  applicationName: "Personal Budgeting",
+  title: "Personal Budgeting",
   description: "Production-ready personal budgeting and financial management",
   manifest: "/manifest.webmanifest",
   icons: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "Ledger Atlas",
+    title: "Personal Budgeting",
     statusBarStyle: "black-translucent",
   },
 };

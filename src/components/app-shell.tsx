@@ -41,7 +41,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-cyan-700">Personal Budgeting</p>
-            <h1 className="text-lg font-semibold text-slate-900">Personal Budgeting</h1>
           </div>
           <LogoutButton />
         </div>
